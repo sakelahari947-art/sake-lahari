@@ -1,0 +1,53 @@
+import requests
+from bs4 import BeautifulSoup
+
+# 1. Define the URL of the news website and the output file name
+URL = 'https://www.bbc.com/news' # Example news site
+OUTPUT_FILE = 'news_headlines.txt'
+
+def scrape_headlines(url):
+    """Fetches, parses, and returns a list of news headlines from the given URL."""
+    try:
+        # 2. Use requests to fetch the HTML content
+        print(f"Fetching content from: {url}")
+        response = requests.get(url)
+        response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
+
+        # 3. Use BeautifulSoup to parse the HTML
+        soup = BeautifulSoup(response.content, 'html.parser')
+        
+        # NOTE: This selector targets specific headline tags on the BBC News homepage.
+        # For a different website, you would need to inspect the page 
+        # (right-click -> Inspect) to find the correct CSS selector or tag (e.g., 'h2', 'h3', 'a', etc.)
+        headline_elements = soup.find_all('h3', class_='gs-c-promo-heading__title')
+        
+        # Extract the text from the elements
+        headlines = [element.get_text(strip=True) for element in headline_elements]
+        
+        return headlines
+        
+    except requests.exceptions.RequestException as e:
+        print(f"Error fetching the page: {e}")
+        return []
+
+def save_to_file(headlines, filename):
+    """Saves the list of headlines to a text file."""
+    if not headlines:
+        print("No headlines to save.")
+        return
+        
+    # 4. Save the titles in a .txt file
+    try:
+        with open(filename, 'w', encoding='utf-8') as f:
+            for headline in headlines:
+                f.write(headline + '\n')
+        print(f"\n✅ Successfully scraped {len(headlines)} headlines.")
+        print(f"Headlines saved to: {filename}")
+    except IOError as e:
+        print(f"Error saving file: {e}")
+
+
+if _name_ == "_main_":
+    # --- Main Execution ---
+    top_headlines = scrape_headlines(URL)
+    save_to_file(top_headlines,OUTPUT_FILE)
